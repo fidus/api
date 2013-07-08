@@ -23,7 +23,7 @@ class PaymentTest extends TestCase
 
 
 		$expected = array(
-			'clientId' => $customerId,
+			'customerId' => $customerId,
 			'totalPrice' => $totalPrice,
 			'remainingCredit' => $remainingCredit,
 			'date' => $date->format('Y-m-d H:i:s'),

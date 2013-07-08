@@ -54,25 +54,25 @@ class RequestSender {
 	 * @internal
 	 *
 	 * @param $type
-	 * @param array $data
+	 * @param $encodedData
 	 *
 	 * @return string
 	 */
-	public function getSignedUrl($type, array $data)
+	public function getSignedUrl($type, $encodedData)
 	{
-		$sign = $this->generateSign($data);
+		$sign = $this->generateSign($encodedData);
 		return $this->url . '/' . $type . '?sign=' . $sign . '&pk=' . $this->publicKey;
 	}
 
 
 	/**
-	 * @param array $data
+	 * @param array $encodedData
 	 *
 	 * @return array
 	 */
-	private function generateSign(array $data)
+	private function generateSign($encodedData)
 	{
-		$sign = sha1( json_encode($data) . $this->secretKey);
+		$sign = sha1( $encodedData . $this->secretKey);
 		return $sign;
 	}
 
@@ -86,10 +86,13 @@ class RequestSender {
 	private function sendCurl($type, array $data)
 	{
 
-		$ch = curl_init($this->getSignedUrl($type, $data));
+		$encodedData = json_encode($data);
+
+		$signedUrl = $this->getSignedUrl($type, $encodedData);
+		$ch = curl_init($signedUrl);
 
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $encodedData);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 				'Content-Type: application/json',
