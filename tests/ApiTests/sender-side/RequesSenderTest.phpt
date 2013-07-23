@@ -28,19 +28,23 @@ class RequestSenderTest extends TestCase
 	{
 		$customerId = 'asdf1234';
 		$totalPrice = 4.25;
-		$remainingCredit = 33.50;
 		$date = new \DateTime('2013-02-15');
 
-		$payment = new \Fidus\Api\Payment($customerId, $totalPrice, $remainingCredit, $date);
+		// get Token
+		$token = new \Fidus\Api\Token($customerId);
+		$response = $this->sender->sendRequest($token);
+		$response = json_decode($response, TRUE);
+
+		$payment = new \Fidus\Api\Payment($customerId, $totalPrice, $response['token'], $date);
 
 		$itemName = 'Presso';
 		$itemPrice = 1.30;
 
 		$payment->addItem($itemName, $itemPrice);
 
-		$signedUrl = $this->sender->getSignedUrl($payment->getType(), $payment->getData());
+		$signedUrl = $this->sender->getSignedUrl($payment->getType(), json_encode($payment->getData()), $payment->getToken());
 
-		$expectedUrl = 'http://fidus.com/api/payment?sign=9757ee00f6331d96e070a1868a1b4ce60a17cce1&pk=testPublicKey';
+		$expectedUrl = 'http://fidus.com/api/payment?sign=20a88556ef4c47a5e3b01025bed69f503f5d0f4d&pk=testPublicKey&token=1e6c8b769546e3e73dd2ef770e6427a77b7f4fae';
 		$this->assertEquals($expectedUrl, $signedUrl);
 	}
 
@@ -48,13 +52,17 @@ class RequestSenderTest extends TestCase
 	function testRecharge()
 	{
 		$customerId = 'asdf1234';
-		$recharge = 20.00;
-		$totalCredit = 35.00;
+		$recharge = 4.00;
 		$date = new \DateTime();
 
-		$rechargeCredit = new \Fidus\Api\RechargeCredit($customerId, $recharge, $totalCredit, $date);
+		// get Token
+		$token = new \Fidus\Api\Token($customerId);
+		$response = $this->sender->sendRequest($token);
+		$response = json_decode($response, TRUE);
 
-		$response = $this->sender->sendRequest($rechargeCredit);
+		$rechargeCredit = new \Fidus\Api\RechargeCredit($customerId, $recharge, $date);
+
+		$response = $this->sender->sendRequest($rechargeCredit, $response['token']);
 
 		$this->assertEquals('{"success":true}', $response);
 
@@ -65,19 +73,35 @@ class RequestSenderTest extends TestCase
 	{
 		$customerId = 'asdf1234';
 		$totalPrice = 1.50;
-		$remainingCredit = 33.50;
 		$date = new \DateTime();
 
-		$payment = new \Fidus\Api\Payment($customerId, $totalPrice, $remainingCredit, $date);
+		// get Token
+		$token = new \Fidus\Api\Token($customerId);
+		$response = $this->sender->sendRequest($token);
+		$response = json_decode($response, TRUE);
+
+		$payment = new \Fidus\Api\Payment($customerId, $totalPrice, $date);
 
 		$itemName = 'Presso';
 		$itemPrice = 1.30;
 
 		$payment->addItem($itemName, $itemPrice);
 
-		$response = $this->sender->sendRequest($payment);
+		$response = $this->sender->sendRequest($payment, $response['token']);
 
 		$this->assertEquals('{"success":true}', $response);
+	}
+
+
+	public function testToken()
+	{
+		$customerId = 'asdf1234';
+
+		$token = new \Fidus\Api\Token($customerId);
+
+		$response = $this->sender->sendRequest($token);
+
+		$this->assertEquals('{"success":true,"token":"833ed2f6cb6ed25b10f7e2096584e3fc743d110d"}', $response);
 	}
 
 }

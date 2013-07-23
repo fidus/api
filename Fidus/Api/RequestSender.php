@@ -6,10 +6,19 @@ namespace Fidus\Api;
 class RequestSender {
 
 
+	/**
+	 * @var string
+	 */
 	private $url = 'http://vernizakaznik.sk/api';
 
+	/**
+	 * @var string
+	 */
 	private $publicKey;
 
+	/**
+	 * @var string
+	 */
 	private $secretKey;
 
 
@@ -27,15 +36,16 @@ class RequestSender {
 
 	/**
 	 * @param IRequest $request
+	 * @param null $token
 	 *
 	 * @return mixed
 	 */
-	public function sendRequest(IRequest $request)
+	public function sendRequest(IRequest $request, $token = NULL)
 	{
 		$data = $request->getData();
 		$type = $request->getType();
 
-		return $this->sendCurl($type, $data);
+		return $this->sendCurl($type, $data, $token);
 	}
 
 
@@ -55,13 +65,18 @@ class RequestSender {
 	 *
 	 * @param $type
 	 * @param $encodedData
+	 * @param null $token
 	 *
 	 * @return string
 	 */
-	public function getSignedUrl($type, $encodedData)
+	public function getSignedUrl($type, $encodedData, $token = NULL)
 	{
-		$sign = $this->generateSign($encodedData);
-		return $this->url . '/' . $type . '?sign=' . $sign . '&pk=' . $this->publicKey;
+		if($token !== NULL) {
+			$token = $this->encrypt($token);
+		}
+
+		$sign = $this->encrypt($encodedData);
+		return $this->url . '/' . $type . '?sign=' . $sign . '&pk=' . $this->publicKey . '&token=' . $token;
 	}
 
 
@@ -70,7 +85,7 @@ class RequestSender {
 	 *
 	 * @return array
 	 */
-	private function generateSign($encodedData)
+	private function encrypt($encodedData)
 	{
 		$sign = sha1( $encodedData . $this->secretKey);
 		return $sign;
@@ -79,16 +94,17 @@ class RequestSender {
 
 	/**
 	 * @param $type
-	 * @param $data
+	 * @param array $data
+	 * @param null $token
 	 *
 	 * @return mixed
 	 */
-	private function sendCurl($type, array $data)
+	private function sendCurl($type, array $data, $token)
 	{
-
 		$encodedData = json_encode($data);
 
-		$signedUrl = $this->getSignedUrl($type, $encodedData);
+		$signedUrl = $this->getSignedUrl($type, $encodedData, $token);
+
 		$ch = curl_init($signedUrl);
 
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");

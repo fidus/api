@@ -19,12 +19,6 @@ class Payment implements IRequest {
 
 
 	/**
-	 * @var float
-	 */
-	private $remainingCredit;
-
-
-	/**
 	 * @var \DateTime
 	 */
 	private $date;
@@ -38,14 +32,12 @@ class Payment implements IRequest {
 	/**
 	 * @param string $customerId
 	 * @param $totalPrice
-	 * @param $remainingCredit
 	 * @param \DateTime $date
 	 */
-	public function __construct($customerId, $totalPrice, $remainingCredit, \DateTime $date = NULL)
+	public function __construct($customerId, $totalPrice, \DateTime $date = NULL)
 	{
 		$this->customerId = $customerId;
 		$this->totalPrice = $totalPrice;
-		$this->remainingCredit = $remainingCredit;
 		$this->date = $date ? $date : new \DateTime();
 	}
 
@@ -87,7 +79,6 @@ class Payment implements IRequest {
 
 		$data['customerId'] = $this->customerId;
 		$data['totalPrice'] = $this->totalPrice;
-		$data['remainingCredit'] = $this->remainingCredit;
 		$data['date'] = $this->date->format('Y-m-d H:i:s');
 
 		$data['items'] = $this->getItems();
